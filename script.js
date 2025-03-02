@@ -89,7 +89,13 @@
                 response.json().then(processData);
             } else {
                 console.error(response);
-                exportElm.value = "Error: " + response.status + " " + response.statusText;
+                if (response.status === 400) {
+                    response.json().then(function (responseJson) {
+                        exportElm.value = "Error: " + JSON.stringify(responseJson, null, 4);
+                    });
+                } else {
+                    exportElm.value = "Error: " + response.status + " " + response.statusText;
+                }
             }
         }).catch(function (error) {
             console.error(error);
