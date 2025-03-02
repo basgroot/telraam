@@ -20,6 +20,18 @@
         let result = "";
         let currentDate = "";
         let cars, heavyVehicles, bikes, pedestians, night;
+        if (data.hasOwnProperty("errorMessage")) {
+            exportElm.value = "Error: " + data.errorMessage;
+            if (data.hasOwnProperty("stackTrace")) {
+                // Reported as security issue
+                exportElm.value += "\n" + data.stackTrace;
+            }
+            return;
+        }
+        if (data.report === undefined || data.report.length === 0) {
+            exportElm.value = "No data found.";
+            return;
+        }
         data.report.forEach(function (element) {
             if (currentDate !== element.date.substring(0, 10)) {
                 // New day. Add totals to CSV and reset counters.
