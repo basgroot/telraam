@@ -1,5 +1,7 @@
 (function () {
 
+    const exportElm = document.getElementById("idExport");
+
     function createDateTime(date) {
 
         function addPrefixZero(number) {
@@ -12,7 +14,7 @@
     function processData(data) {
 
         function appendResult() {
-            return currentDate + "," + cars + "," + heavyVehicles + "," + bikes + "," + pedestians + "," + night + "\n";
+            return "\"" + currentDate + "\";" + cars + ";" + heavyVehicles + ";" + bikes + ";" + pedestians + ";" + night + "\n";
         }
 
         let result = "";
@@ -23,7 +25,7 @@
                 // New day. Add totals to CSV and reset counters.
                 if (result === "") {
                     // Initial iteration. Add header.
-                    result = "Date,Cars,Heavy vehicles,Bikes,Pedestians,Night\n";
+                    result = "\"Date\";\"Cars\";\"Heavy vehicles\";\"Bikes\";\"Pedestrians\";\"Night\"\n";
                 } else {
                     result += appendResult();
                 }
@@ -42,7 +44,7 @@
             night += element.night;
         });
         result += appendResult();
-        document.getElementById("idExport").value = result;
+        exportElm.value = result;
     }
 
     function retrieveData() {
@@ -59,7 +61,7 @@
             "time_start": createDateTime(dateStart),
             "time_end": createDateTime(dateEnd)
         };
-        console.log(JSON.stringify(body, null, 4));
+        exportElm.value = "Requesting " + JSON.stringify(body, null, 4);
         fetch(
             url + "?path=v1/reports/traffic",
             {
@@ -76,9 +78,11 @@
                 response.json().then(processData);
             } else {
                 console.error(response);
+                exportElm.value = "Error: " + response.status + " " + response.statusText;
             }
         }).catch(function (error) {
             console.error(error);
+            exportElm.value = "Error: " + error;
         });
     }
 
