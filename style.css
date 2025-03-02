@@ -17,6 +17,24 @@ h1 {
     font-weight: bold;
 }
 
+button, input[type=date] {
+    padding: 12px 20px;
+    margin: 8px 0;
+    background-color: #003082;
+    color: #FFFEF8;
+    display: inline-block;
+    border: 1px solid;
+    border-color: #FEC919;
+    box-sizing: border-box;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+button {
+    cursor: pointer;
+}
+
 input[type=text], textarea {
     width: 100%;
     padding: 12px 20px;

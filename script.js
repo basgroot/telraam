@@ -51,9 +51,8 @@
         // A proce must be used, to prevent CORS errors
         // Locel use "http://localhost/telraam-proxy/index.php"
         const url = "https://elektrischdeelrijden.nl/wp-content/include-me/telraam-proxy/index.php";  // This is proxying https://telraam-api.net/v1/reports/traffic
-        const dateEnd = new Date();
-        // Extract three months
-        const dateStart = new Date(dateEnd.getFullYear(), dateEnd.getMonth() - 3, dateEnd.getDate());
+        const dateEnd = new Date(document.getElementById("idDateEnd").value);
+        const dateStart = new Date(document.getElementById("idDateStart").value);
         const body = {
             "level": "segments",
             "id": document.getElementById("idLocationId").value,
@@ -88,6 +87,12 @@
 
     function initialize() {
         document.getElementById("idSubmit").addEventListener("click", retrieveData);
+        const dateEnd = new Date();
+        dateEnd.setDate(dateEnd.getDate() + 1);  // Range is not including this day
+        // Extract three months
+        const dateStart = new Date(dateEnd.getFullYear(), dateEnd.getMonth() - 3, dateEnd.getDate());
+        document.getElementById("idDateStart").value = dateStart.toISOString().substring(0, 10);
+        document.getElementById("idDateEnd").value = dateEnd.toISOString().substring(0, 10);
     }
 
     initialize();

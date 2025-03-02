@@ -8,12 +8,19 @@
     <link rel="shortcut icon" href="https://telraam.net/favicon.ico">
     <link rel="stylesheet" href="style.css">
     <script type="text/javascript" src="script.js" defer></script>
-    <title>Telraam export</title>
+    <title>Export Telraam data</title>
 </head>
 
 <body>
     <h1>Export Telraam traffic stats</h1>
-    <label>API Key (<a href="https://telraam.net/nl/admin/mijn-eigen-telraam/tokens" target="_blank">get one</a>): <input type="text" id="idApiKey" class="input" placeholder="Enter your API key" value="" /></label>
+    <label>API Key (<a href="https://telraam.net/nl/admin/mijn-eigen-telraam/tokens" target="_blank">get one</a>):
+    <input
+           type="text"
+           id="idApiKey"
+           class="input"
+           placeholder="Enter your API key"
+           value=""
+    /></label>
     <label>Location ID (last part of URL): <input type="text" id="idLocationId" list="isIds" class="input" placeholder="Enter location id" value="9000007626" /></label>
     <datalist id="isIds">
         <option value="9000007951"></option>
@@ -21,6 +28,9 @@
         <option value="9000007629"></option>
         <option value="9000004815"></option>
     </datalist>
+    <br>
+    <label>From <input type="date" id="idDateStart"></label><label> to <input type="date" id="idDateEnd"></label>
+    <br>
     <button id="idSubmit">Export</button>
     <br>
     <textarea id="idExport" rows="95"></textarea>
