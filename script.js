@@ -13,13 +13,24 @@
 
     function processData(data) {
 
+        function formatNumber(number) {
+            return number.toLocaleString(document.getElementById("idDecimalLocale").value);
+        }
+
         function appendResult() {
-            return "\"" + currentDate + "\";" + cars + ";" + heavyVehicles + ";" + bikes + ";" + pedestians + ";" + night + "\n";
+            return "\"" + currentDate + "\";" + formatNumber(cars) + ";" + formatNumber(heavyVehicles) + ";" + formatNumber(bikes) + ";" + formatNumber(pedestians) + ";" + formatNumber(night) + ";" +
+                formatNumber(carsCorrected) + ";" + formatNumber(heavyVehiclesCorrected) + ";" + formatNumber(bikesCorrected) + ";" + formatNumber(pedestiansCorrected) + ";" + formatNumber(nightCorrected) + ";" + count + "\n";
+        }
+
+        function adjustForDowntime(count, uptime) {
+            return count / uptime;
         }
 
         let result = "";
         let currentDate = "";
         let cars, heavyVehicles, bikes, pedestians, night;
+        let carsCorrected, heavyVehiclesCorrected, bikesCorrected, pedestiansCorrected, nightCorrected;
+        let count;
         if (data.hasOwnProperty("errorMessage")) {
             exportElm.value = "Error: " + data.errorMessage;
             if (data.hasOwnProperty("stackTrace")) {
@@ -37,7 +48,7 @@
                 // New day. Add totals to CSV and reset counters.
                 if (result === "") {
                     // Initial iteration. Add header.
-                    result = "\"Date\";\"Cars\";\"Heavy vehicles\";\"Bikes\";\"Pedestrians\";\"Night\"\n";
+                    result = "\"Date\";\"Cars\";\"Heavy vehicles\";\"Bikes\";\"Pedestrians\";\"Night\";\"Cars corrected\";\"Heavy vehicles corrected\";\"Bikes corrected\";\"Pedestrians corrected\";\"Night corrected\";\"Hours\"\n";
                 } else {
                     result += appendResult();
                 }
@@ -47,13 +58,28 @@
                 bikes = 0;
                 pedestians = 0;
                 night = 0;
+                carsCorrected = 0;
+                heavyVehiclesCorrected = 0;
+                bikesCorrected = 0;
+                pedestiansCorrected = 0;
+                nightCorrected = 0;
+                count = 0;
                 console.log("Processing day " + currentDate);
+            }
+            if (element.uptime < 0.7 && element.night == 0) {
+                console.log("Low uptime " + JSON.stringify(element, null, 4));
             }
             cars += element.car;
             heavyVehicles += element.heavy;
             bikes += element.bike;
             pedestians += element.pedestrian;
             night += element.night;
+            carsCorrected += adjustForDowntime(element.car, element.uptime);
+            heavyVehiclesCorrected += adjustForDowntime(element.heavy, element.uptime);
+            bikesCorrected += adjustForDowntime(element.bike, element.uptime);
+            pedestiansCorrected += adjustForDowntime(element.pedestrian, element.uptime);
+            nightCorrected += adjustForDowntime(element.night, element.uptime);
+            count += 1;
         });
         result += appendResult();
         exportElm.value = result;

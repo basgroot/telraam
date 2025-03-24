@@ -50,6 +50,10 @@ input[type=text], textarea {
     font-weight: bold;
 }
 
+input.small {
+    width: 10%;
+}
+
 input[type=text]:focus {
     border-color: #13313B;
 }
