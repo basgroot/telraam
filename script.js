@@ -98,6 +98,11 @@
             "time_start": createDateTime(dateStart),
             "time_end": createDateTime(dateEnd)
         };
+        const apiKey = document.getElementById("idApiKey").value.trim();
+        if (apiKey === "") {
+            exportElm.value = "Error: API key required.";
+            return;
+        }
         exportElm.value = "Requesting " + JSON.stringify(body, null, 4);
         fetch(
             url + "?path=v1/reports/traffic",
@@ -106,7 +111,7 @@
                 "headers": {
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "X-Api-Key": document.getElementById("idApiKey").value
+                    "X-Api-Key": apiKey
                 },
                 "body": JSON.stringify(body)
             }
@@ -115,9 +120,9 @@
                 response.json().then(processData);
             } else {
                 console.error(response);
-                if (response.status === 400) {
+                if (response.status >= 400 && response.status < 500) {
                     response.json().then(function (responseJson) {
-                        exportElm.value = "Error: " + JSON.stringify(responseJson, null, 4);
+                        exportElm.value = "Error " + response.status + ": " + JSON.stringify(responseJson, null, 4);
                     });
                 } else {
                     exportElm.value = "Error: " + response.status + " " + response.statusText;
