@@ -48,6 +48,8 @@ input[type=text], textarea {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 15px;
     font-weight: bold;
+    white-space: nowrap;
+    overflow: auto;
 }
 
 input.small {
