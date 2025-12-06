@@ -2,118 +2,80 @@
 
     const exportElm = document.getElementById("idExport");
 
-    function createDateTime(date) {
-
-        function addPrefixZero(number) {
-            return number < 10 ? "0" + number : number;
-        }
-
-        return date.getFullYear() + "-" + addPrefixZero(date.getMonth() + 1) + "-" +  addPrefixZero(date.getDate()) + " 00:00:00Z";
+    function addPrefixZero(number) {
+        return number < 10 ? "0" + number : number;
     }
 
-    function processData(data) {
+    function createDateString(date) {
+        return date.getFullYear() + "-" + addPrefixZero(date.getMonth() + 1) + "-" +  addPrefixZero(date.getDate());
+    }
 
-        function formatNumber(number) {
-            return number.toLocaleString(document.getElementById("idDecimalLocale").value);
+    function formatNumber(number) {
+        return number.toLocaleString(document.getElementById("idDecimalLocale").value);
+    }
+
+    function processData(responseJson) {
+
+        function hasProperty(obj, propertyName) {
+            if (Object.hasOwn(obj, propertyName)) {
+                return true;
+            }
+            exportElm.value = "No '" + propertyName + "' data found.";
+            return false;
         }
 
-        function appendResult() {
-            return "\"" + currentDate + "\";" + formatNumber(cars) + ";" + formatNumber(heavyVehicles) + ";" + formatNumber(bikes) + ";" + formatNumber(pedestians) + ";" + formatNumber(night) + ";" +
-                formatNumber(carsCorrected) + ";" + formatNumber(heavyVehiclesCorrected) + ";" + formatNumber(bikesCorrected) + ";" + formatNumber(pedestiansCorrected) + ";" + formatNumber(nightCorrected) + ";" + count + "\n";
-        }
-
-        function adjustForDowntime(count, uptime) {
-            return count / uptime;
-        }
-
-        let result = "";
-        let currentDate = "";
-        let cars, heavyVehicles, bikes, pedestians, night;
-        let carsCorrected, heavyVehiclesCorrected, bikesCorrected, pedestiansCorrected, nightCorrected;
-        let count;
-        if (data.hasOwnProperty("errorMessage")) {
-            exportElm.value = "Error: " + data.errorMessage;
-            if (data.hasOwnProperty("stackTrace")) {
+        if (Object.hasOwn(responseJson, "errorMessage")) {
+            exportElm.value = "Error: " + responseJson.errorMessage;
+            if (Object.hasOwn(responseJson, "stackTrace")) {
                 // Reported as security issue
-                exportElm.value += "\n" + data.stackTrace;
+                exportElm.value += "\n" + responseJson.stackTrace;
             }
             return;
         }
-        if (data.report === undefined || data.report.length === 0) {
-            exportElm.value = "No data found.";
+        if (!Object.hasOwn(responseJson, "data") || !Object.hasOwn(responseJson, "dates")) {
+            exportElm.value = "Error: Unexpected data received: " + JSON.stringify(responseJson, null, 4);
             return;
         }
-        data.report.forEach(function (element) {
-            if (currentDate !== element.date.substring(0, 10)) {
-                // New day. Add totals to CSV and reset counters.
-                if (result === "") {
-                    // Initial iteration. Add header.
-                    result = "\"Date\";\"Cars\";\"Heavy vehicles\";\"Bikes\";\"Pedestrians\";\"Night\";\"Cars corrected\";\"Heavy vehicles corrected\";\"Bikes corrected\";\"Pedestrians corrected\";\"Night corrected\";\"Hours\"\n";
-                } else {
-                    result += appendResult();
-                }
-                currentDate = element.date.substring(0, 10);
-                cars = 0;
-                heavyVehicles = 0;
-                bikes = 0;
-                pedestians = 0;
-                night = 0;
-                carsCorrected = 0;
-                heavyVehiclesCorrected = 0;
-                bikesCorrected = 0;
-                pedestiansCorrected = 0;
-                nightCorrected = 0;
-                count = 0;
-                console.log("Processing day " + currentDate);
-            }
-            if (element.uptime < 0.7 && element.night == 0) {
-                console.log("Low uptime " + JSON.stringify(element, null, 4));
-            }
-            cars += element.car;
-            heavyVehicles += element.heavy;
-            bikes += element.bike;
-            pedestians += element.pedestrian;
-            night += element.night;
-            carsCorrected += adjustForDowntime(element.car, element.uptime);
-            heavyVehiclesCorrected += adjustForDowntime(element.heavy, element.uptime);
-            bikesCorrected += adjustForDowntime(element.bike, element.uptime);
-            pedestiansCorrected += adjustForDowntime(element.pedestrian, element.uptime);
-            nightCorrected += adjustForDowntime(element.night, element.uptime);
-            count += 1;
+        if (!hasProperty(responseJson.data, "bike") ||
+            !hasProperty(responseJson.data, "car") ||
+            !hasProperty(responseJson.data, "heavy") ||
+            !hasProperty(responseJson.data, "pedestrian") ||
+            !hasProperty(responseJson.data, "night")) {
+            return;
+        }
+
+        let result = "\"Date\";\"Cars\";\"Heavy vehicles\";\"Bikes\";\"Pedestrians\";\"Night\"\n";
+        responseJson.dates.forEach(function (element, i) {
+            const currentDate = element;
+            const bikes = responseJson.data.bike[i];
+            const cars = responseJson.data.car[i];
+            const heavyVehicles = responseJson.data.heavy[i];
+            const pedestrians = responseJson.data.pedestrian[i];
+            const night = responseJson.data.night[i];
+            result += "\"" + currentDate + "\";" + formatNumber(cars) + ";" + formatNumber(heavyVehicles) + ";" + formatNumber(bikes) + ";" + formatNumber(pedestrians) + ";" + formatNumber(night) + "\n";
         });
-        result += appendResult();
+
         exportElm.value = result;
     }
 
     function retrieveData() {
-        // A proce must be used, to prevent CORS errors
-        // Locel use "http://localhost/telraam-proxy/index.php"
-        const url = "https://elektrischdeelrijden.nl/wp-content/include-me/telraam-proxy/index.php";  // This is proxying https://telraam-api.net/v1/reports/traffic
-        const dateEnd = new Date(document.getElementById("idDateEnd").value);
+        // A proxy must be used, to prevent CORS errors
+        // Local use const url = "http://localhost/telraam-proxy/index.php";
+        // Remote use const url = "https://elektrischdeelrijden.nl/wp-content/include-me/telraam-proxy/index.php";
         const dateStart = new Date(document.getElementById("idDateStart").value);
-        const body = {
-            "level": "segments",
-            "id": document.getElementById("idLocationId").value,
-            "format": "per-hour",  // Seems to be only option
-            "time_start": createDateTime(dateStart),
-            "time_end": createDateTime(dateEnd)
-        };
-        const apiKey = document.getElementById("idApiKey").value.trim();
-        if (apiKey === "") {
-            exportElm.value = "Error: API key required.";
-            return;
-        }
-        exportElm.value = "Requesting " + JSON.stringify(body, null, 4);
+        const dateEnd = new Date(document.getElementById("idDateEnd").value);
+        const url = "https://elektrischdeelrijden.nl/wp-content/include-me/telraam-proxy/index.php" +
+            "?id=" + encodeURIComponent(document.getElementById("idLocationId").value) +
+            "&dateStart=" + encodeURIComponent(createDateString(dateStart)) +
+            "&dateEnd=" + encodeURIComponent(createDateString(dateEnd));
+        // Sample: https://telraam.net/api/measurements-day-barchart/segments/9000007626/2025-09-02/2025-09-16
+        exportElm.value = "Requesting " + url + " ...";
         fetch(
-            url + "?path=v1/reports/traffic",
-            {
-                "method": "POST",
+            url, {
+                "method": "GET",
                 "headers": {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "X-Api-Key": apiKey
-                },
-                "body": JSON.stringify(body)
+                    "Accept": "application/json"
+                }
             }
         ).then(function (response) {
             if (response.ok) {
