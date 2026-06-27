@@ -25,6 +25,20 @@
     }
 
     /**
+     * Parses a "YYYY-MM-DD" string into a Date at local midnight.
+     * Avoids the UTC off-by-one that new Date("YYYY-MM-DD") would introduce.
+     * @param {string} dateString - A date string in the format "YYYY-MM-DD".
+     * @returns {Date} A Date object at local midnight, or null if the input is invalid.
+     */
+    function parseDateString(dateString) {
+        const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+        if (!parts) {
+            return null;
+        }
+        return new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
+    }
+
+    /**
      * Formats a number according to the specified locale from the decimal locale input element.
      * 
      * @param {number} number - The number to be formatted.
@@ -171,6 +185,16 @@
      */
     function initialize() {
         document.getElementById("idSubmit").addEventListener("click", retrieveData);
+        // When the start date changes, set the end date to start + 90 days (safely within the
+        // Telraam API maximum span of 91 days; a larger range returns an empty result).
+        document.getElementById("idDateStart").addEventListener("change", function () {
+            const start = parseDateString(document.getElementById("idDateStart").value);
+            if (start === null) {
+                return;
+            }
+            start.setDate(start.getDate() + 90);
+            document.getElementById("idDateEnd").value = createDateString(start);
+        });
         const dateEnd = new Date();
         dateEnd.setDate(dateEnd.getDate() + 1);  // Range is not including this day
         // The Telraam API rejects ranges longer than 91 days and then returns an empty result.
