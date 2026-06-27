@@ -79,6 +79,14 @@
             }
             return;
         }
+        // Telraam returned a successful but empty result; show the explanatory message if present.
+        if (Object.hasOwn(responseJson, "message") &&
+            Object.hasOwn(responseJson, "dates") &&
+            Array.isArray(responseJson.dates) &&
+            responseJson.dates.length === 0) {
+            exportElm.value = responseJson.message;
+            return;
+        }
         if (!Object.hasOwn(responseJson, "data") || !Object.hasOwn(responseJson, "dates")) {
             exportElm.value = "Error: Unexpected data received: " + JSON.stringify(responseJson, null, 4);
             return;

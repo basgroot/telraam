@@ -1,8 +1,10 @@
 <?php
 
-// Add for debugging:
+// Log all errors, but never print them into the response body (it would corrupt the JSON).
+// Set display_errors to 1 temporarily only when debugging locally.
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
 function throwErrorAndDie($error, $returnCode) {
     http_response_code($returnCode);
@@ -24,7 +26,7 @@ function configureCurl($url) {
         ),
         CURLOPT_FAILONERROR    => false,  // Required for HTTP error codes to be reported via call to curl_error($ch)
         CURLOPT_SSL_VERIFYPEER => true,  // false to stop cURL from verifying the peer's certificate.
-        CURLOPT_CAINFO         => __DIR__ . '/cacert-2025-12-02.pem',  // This Mozilla CA certificate store downloaded from https://curl.haxx.se/docs/caextract.html
+        CURLOPT_CAINFO         => __DIR__ . '/cacert-2026-05-14.pem',  // This Mozilla CA certificate store downloaded from https://curl.haxx.se/docs/caextract.html
         CURLOPT_SSL_VERIFYHOST => 2,  // 2 to verify that a Common Name field or a Subject Alternate Name field in the SSL peer certificate matches the provided hostname.
         CURLOPT_FOLLOWLOCATION => false,  // true to follow any "Location: " header that the server sends as part of the HTTP header.
         CURLOPT_RETURNTRANSFER => true,  // true to return the transfer as a string of the return value of curl_exec() instead of outputting it directly.
@@ -62,7 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] != 'GET') {
     throwErrorAndDie('Method Not Allowed', 405);
 }
 
-header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+}
 
 // Check if cURL is installed
 if (!function_exists('curl_init')){
@@ -100,14 +104,37 @@ $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
 // Separate response header from response
 $headers = explode("\n", substr($response, 0, $header_size));
 $body = substr($response, $header_size);
+// Message shown when Telraam reports success but returns no usable data.
+// The most common cause is a date range that exceeds the API maximum of ~3 months (92+ days).
+$noDataMessage = 'No data for the selected period. The date range may exceed the Telraam API maximum of 3 months (92+ days), or the segment has no measurements in this period. Try reducing the range by a day or more.';
+
 if ($body === '') {
     if ($httpCode < 200 || $httpCode >= 300) {
         // Don't quit immediately. Construct a valid error and continue.
         throwErrorAndDie(trim($headers[0]), $httpCode);
     } else {
-        // No response body, but response code indicates success https://developer.mozilla.org/en-US/docs/Web/HTTP/Status#successful_responses
+        // Successful status but Telraam returned an empty body. Return valid JSON with a hint.
+        http_response_code($httpCode);
+        echo json_encode(array(
+            'labels'  => array(),
+            'dates'   => array(),
+            'data'    => array(),
+            'message' => $noDataMessage
+        ));
     }
 } else {
     http_response_code($httpCode);
-    echo $body;
+    // Detect the Telraam "success but empty" response (e.g. {"labels":[],"dates":[],"data":[]})
+    // and enrich it with a helpful message so the client can explain the empty result.
+    $decoded = json_decode($body, true);
+    if (is_array($decoded)
+        && array_key_exists('dates', $decoded)
+        && is_array($decoded['dates'])
+        && count($decoded['dates']) === 0
+        && !array_key_exists('message', $decoded)) {
+        $decoded['message'] = $noDataMessage;
+        echo json_encode($decoded);
+    } else {
+        echo $body;
+    }
 }
