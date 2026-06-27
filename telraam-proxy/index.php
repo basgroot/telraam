@@ -8,7 +8,12 @@ ini_set('log_errors', 1);
 
 function throwErrorAndDie($error, $returnCode) {
     http_response_code($returnCode);
-    die('{"code":'.$returnCode.',"reason":"'.$error.'","message":"'.$error.'"}');
+    // Use json_encode so special characters in $error can never produce invalid JSON.
+    die(json_encode(array(
+        'code'    => $returnCode,
+        'reason'  => $error,
+        'message' => $error
+    )));
 }
 
 /**
@@ -41,7 +46,9 @@ function configureCurl($url) {
     return $ch;
 }
 
-header('Access-Control-Allow-Credentials: true');
+// This proxy serves only public data and needs no credentials, so allow any origin.
+// Set CORS early so it is present on error responses (e.g. 405/400) as well.
+header('Access-Control-Allow-Origin: *');
 
 // Access-Control headers are received during OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -51,9 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
         header('Access-Control-Allow-Headers: ' . $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
     }
-    if (isset($_SERVER['HTTP_ORIGIN'])) {
-        header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
-    }
     header('Access-Control-Max-Age: 86400');  // Cache for 1 day
     die();  // Don't do anything else
 }
@@ -62,10 +66,6 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] != 'GET') {
     throwErrorAndDie('Method Not Allowed', 405);
-}
-
-if (isset($_SERVER['HTTP_ORIGIN'])) {
-    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
 }
 
 // Check if cURL is installed

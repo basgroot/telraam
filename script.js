@@ -122,12 +122,12 @@
         // A proxy must be used, to prevent CORS errors
         // Local use const url = "http://localhost/telraam-proxy/index.php";
         // Remote use const url = "https://basement.nl/telraam-proxy/index.php";
-        const dateStart = new Date(document.getElementById("idDateStart").value);
-        const dateEnd = new Date(document.getElementById("idDateEnd").value);
+        // The date inputs already provide "YYYY-MM-DD"; use the values directly to avoid a
+        // UTC off-by-one day that a round-trip through Date would introduce in some timezones.
         const url = "https://basement.nl/telraam-proxy/index.php" +
             "?id=" + encodeURIComponent(document.getElementById("idLocationId").value) +
-            "&dateStart=" + encodeURIComponent(createDateString(dateStart)) +
-            "&dateEnd=" + encodeURIComponent(createDateString(dateEnd));
+            "&dateStart=" + encodeURIComponent(document.getElementById("idDateStart").value) +
+            "&dateEnd=" + encodeURIComponent(document.getElementById("idDateEnd").value);
         // Sample: https://telraam.net/api/measurements-day-barchart/segments/9000007626/2025-09-02/2025-09-16
         exportElm.value = "Requesting " + url + " ...";
         fetch(
