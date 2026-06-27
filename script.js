@@ -173,11 +173,13 @@
         document.getElementById("idSubmit").addEventListener("click", retrieveData);
         const dateEnd = new Date();
         dateEnd.setDate(dateEnd.getDate() + 1);  // Range is not including this day
-        // Extract three months
-        const dateStart = new Date(dateEnd.getFullYear(), dateEnd.getMonth() - 3, dateEnd.getDate());
-        dateStart.setDate(dateStart.getDate() + 1);
-        document.getElementById("idDateStart").value = dateStart.toISOString().substring(0, 10);
-        document.getElementById("idDateEnd").value = dateEnd.toISOString().substring(0, 10);
+        // The Telraam API rejects ranges longer than 91 days and then returns an empty result.
+        // A calendar "3 months" can be up to 92 days, so use a fixed 90-day window in days instead.
+        const dateStart = new Date(dateEnd);
+        dateStart.setDate(dateStart.getDate() - 90);
+        // Use createDateString (local date parts) to avoid a UTC off-by-one day from toISOString().
+        document.getElementById("idDateStart").value = createDateString(dateStart);
+        document.getElementById("idDateEnd").value = createDateString(dateEnd);
     }
 
     initialize();
