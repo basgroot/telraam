@@ -113,10 +113,10 @@
     function retrieveData() {
         // A proxy must be used, to prevent CORS errors
         // Local use const url = "http://localhost/telraam-proxy/index.php";
-        // Remote use const url = "https://elektrischdeelrijden.nl/wp-content/include-me/telraam-proxy/index.php";
+        // Remote use const url = "https://basement.nl/telraam-proxy/index.php";
         const dateStart = new Date(document.getElementById("idDateStart").value);
         const dateEnd = new Date(document.getElementById("idDateEnd").value);
-        const url = "https://elektrischdeelrijden.nl/wp-content/include-me/telraam-proxy/index.php" +
+        const url = "https://basement.nl/telraam-proxy/index.php" +
             "?id=" + encodeURIComponent(document.getElementById("idLocationId").value) +
             "&dateStart=" + encodeURIComponent(createDateString(dateStart)) +
             "&dateEnd=" + encodeURIComponent(createDateString(dateEnd));

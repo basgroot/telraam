@@ -72,6 +72,18 @@ if (!function_exists('curl_init')){
 $id = filter_input(INPUT_GET, 'id', FILTER_DEFAULT);
 $dateStart = filter_input(INPUT_GET, 'dateStart', FILTER_DEFAULT);
 $dateEnd = filter_input(INPUT_GET, 'dateEnd', FILTER_DEFAULT);
+
+// Validate input parameters
+if (empty($id) || !preg_match('/^\d+$/', $id)) {
+    throwErrorAndDie('Invalid or missing id parameter. Must be a numeric segment ID.', 400);
+}
+if (empty($dateStart) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStart)) {
+    throwErrorAndDie('Invalid or missing dateStart parameter. Must be in YYYY-MM-DD format.', 400);
+}
+if (empty($dateEnd) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateEnd)) {
+    throwErrorAndDie('Invalid or missing dateEnd parameter. Must be in YYYY-MM-DD format.', 400);
+}
+
 $url = 'https://telraam.net/api/measurements-day-barchart/segments/'.$id.'/'.$dateStart.'/'.$dateEnd;
 
 // Create cURL handle
@@ -84,7 +96,7 @@ if ($response === false) {
 }
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);  // As of cURL 7.10.8, this is a legacy alias of CURLINFO_RESPONSE_CODE
 $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-curl_close($ch);
+
 // Separate response header from response
 $headers = explode("\n", substr($response, 0, $header_size));
 $body = substr($response, $header_size);
